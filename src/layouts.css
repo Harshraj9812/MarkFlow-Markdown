@@ -1,0 +1,54 @@
+/* Container queries keep the preview responsive even inside the editor workspace. */
+.preview-controls{display:flex;align-items:center;gap:12px}
+@media(min-width:1101px){.workspace.reading-view{grid-template-columns:minmax(0,1fr) 246px}.workspace.reading-view .editor-pane{display:none}}
+@media(min-width:701px) and (max-width:1100px){.workspace.reading-view{grid-template-columns:minmax(0,1fr)}.workspace.reading-view .editor-pane{display:none}}
+@media(max-width:700px){#expand-preview{display:none}}
+/* Preserve the chosen left layout in the split workspace as well as reading view. */
+@media screen and (min-width:1200px){
+  .workspace:not(.reading-view):has(.document-layout[data-toc-position=left]){grid-template-columns:minmax(220px,.55fr) minmax(600px,1.45fr) 246px}
+}
+@media screen and (min-width:701px){
+  .preview-pane .document:has(.document-layout[data-toc-position=left]){min-width:576px;padding:24px}
+}
+.document{container-type:inline-size}
+.document-content{min-width:0}
+.document-content>:first-child{margin-top:0}
+.document .print-lead{display:contents}
+.document[data-pdf-style=minimal]{--code:#fff}
+.document[data-pdf-style=minimal] :is(.codeblock,.toc,.diagram,.callout,.math-slot){background:#fff}
+.document .toc{padding:20px;line-height:1.6}
+.document .toc strong{font-size:11px;letter-spacing:.1em}
+.document .toc ol{list-style:none;padding:0;margin:12px 0 0;font-size:inherit}
+.document .toc li{margin:2px 0}
+.document .toc a{display:block;padding:7px 9px 7px calc(9px + var(--toc-depth,0)*12px);font-size:13px;line-height:1.6;border-radius:4px;overflow-wrap:break-word;word-break:normal}
+.document .toc a:hover,.document .toc a:focus-visible{background:color-mix(in srgb,var(--doc-accent) 8%,transparent);color:var(--doc-accent)}
+.document-layout>.toc{margin:0 0 24px}
+.document:has(.document-layout[data-toc-position=left]){max-width:1200px}
+@container(min-width:460px){
+  @media screen and (min-width:701px){
+    .preview-pane .document-layout[data-toc-position=left]{display:grid;grid-template-columns:clamp(200px,28%,320px) minmax(0,1fr);gap:24px;align-items:start}
+    .preview-pane .document-layout[data-toc-position=left]>.toc{position:sticky;top:0;max-height:clamp(260px,calc(100dvh - 360px),700px);overflow:auto;margin:0;padding:16px 12px;font-size:13px;scrollbar-gutter:stable}
+  }
+}
+@container(min-width:760px){
+  .document-layout[data-toc-position=left]{display:grid;grid-template-columns:minmax(240px,28%) minmax(0,1fr);gap:30px;align-items:start}
+  .document-layout[data-toc-position=left]>.toc{position:sticky;top:0;max-height:calc(100dvh - 100px);overflow:auto;margin:0;padding:18px 14px;font-size:13px;scrollbar-gutter:stable}
+}
+@media print{
+  .document{container-type:normal}
+  /* Override the more-specific screen backdrop, including the final page's empty area. */
+  body.document-host,body.document-host.theme-dark,body.document-host.theme-light{background:#fff}
+  .document[data-theme]{--doc:#fff;--code:#f2f5f9;--doc-text:#263346;--doc-muted:#5a6a7f;--doc-line:#dfe5ed;--doc-accent:#177459;--doc-purple:#7152b7;color-scheme:light}
+  .document[data-pdf-style=minimal]{--code:#fff}
+  .document .document-layout[data-toc-position=left]{display:grid;grid-template-columns:44mm minmax(0,1fr);gap:6mm;align-items:start}
+  .document .document-layout>.toc{position:static;max-height:none;overflow:visible;margin:0;padding:12px 9px;font-size:10px;break-inside:auto}
+  .document .toc a{padding:4px 3px 4px calc(3px + var(--toc-depth,0)*7px);font-size:10px;line-height:1.5}
+  .document .toc li{break-inside:avoid}
+  .document .toc strong{font-size:9px}
+  /* Keep short blocks intact. Browsers can still fragment blocks taller than a page. */
+  .document .document-layout .document-content :is(.codeblock,pre){break-inside:avoid;page-break-inside:avoid}
+  /* Keep the introduction and code together when the group fits on one page. */
+  .document .document-layout .document-content .print-lead{display:block;break-inside:avoid;page-break-inside:avoid}
+  .document .code-head{break-after:avoid;page-break-after:avoid;padding:6px 12px}
+  .document pre{font-size:.8em;line-height:1.5;padding:12px 14px}
+}

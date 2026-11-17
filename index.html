@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b0e14">
+  <meta name="description" content="Turn Markdown notes into modern HTML and PDF with diagrams, equations and code highlighting. Private, installable and offline ready.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <title>Markflow · Markdown workspace</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Markflow home"><span class="brand-icon" aria-hidden="true">m↗</span>markflow</a>
+    <div class="top-right"><span class="privacy">Your notes. Your device.</span><span class="pill" id="offline-status" data-state="preparing" role="status">Preparing offline access…</span><button id="install" hidden>Install app</button></div>
+  </header>
+  <main class="page">
+    <div class="update-banner" id="update-banner" hidden>A new version is ready. Your draft will be kept. <button id="update-app">Update app</button></div>
+    <section class="intro" aria-labelledby="page-title">
+      <div><p class="eyebrow">From notes to knowledge</p><h1 id="page-title">Good docs start here.</h1><p>Turn your Markdown into something worth sharing.</p></div>
+      <div class="intro-actions"><button class="quiet" id="sample">Load example</button></div>
+    </section>
+    <div class="workspace" id="workspace" data-view="preview">
+      <section class="editor-pane" id="editor-panel" aria-label="Markdown source">
+        <div class="pane-top"><span class="pane-label"><span class="subtle" aria-hidden="true">⌘</span> Markdown</span><span class="editor-actions"><label class="wrap-toggle"><input id="wrap-text" type="checkbox" checked>Wrap text</label><button class="text-button" id="download-md">Save .md ↓</button></span></div>
+        <div class="filename"><b>MD</b><span id="input-filename">untitled.md</span></div>
+        <div class="import-area" id="drop-zone"><p>Drop your Markdown file here</p><button id="browse-markdown">Browse files</button> <button class="quiet" id="paste-markdown">Paste text</button><p class="helper">.md / .markdown / .txt · or type in the editor below</p></div>
+        <input id="file-input" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+        <label class="sr-only" for="source">Markdown editor</label>
+        <div class="editor-wrap"><div class="gutter" id="gutter" aria-hidden="true"></div><textarea id="source" placeholder="# Your next great document&#10;&#10;Paste Markdown here, or drop a file above…" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea></div>
+        <div class="editor-foot"><span id="save-status" role="status">Draft stays on this device</span><span id="input-count"></span></div>
+        <div class="editor-bottom"><button class="text-button" id="clear">Clear document</button><span class="subtle small">Ctrl / ⌘ + S to save Markdown</span></div>
+      </section>
+      <section class="preview-pane" id="preview-panel" aria-label="Document preview" aria-busy="false">
+        <div class="pane-top"><span class="pane-label"><span class="dot" aria-hidden="true"></span>Document preview</span><span class="preview-controls"><span class="subtle small" id="render-status" role="status">Starting…</span><button class="text-button" id="expand-preview" aria-pressed="false">Expand preview</button></span></div>
+        <div class="render-warning" id="render-warning" role="status" hidden></div>
+        <div class="preview-scroll"><article class="document" id="document" data-theme="dark"></article></div>
+      </section>
+      <details class="settings" id="settings-panel" open><summary class="settings-heading"><span aria-hidden="true">☷</span> Document settings</summary>
+        <div class="settings-body">
+          <div class="setting-group"><p class="setting-title">Appearance</p><span class="field-label" id="theme-label">Document theme</span><div class="theme-options" role="group" aria-labelledby="theme-label"><button class="theme-choice" data-theme="dark" aria-pressed="true"><span class="swatch" aria-hidden="true"></span>Dark</button><button class="theme-choice" data-theme="light" aria-pressed="false"><span class="swatch light-swatch" aria-hidden="true"></span>Light</button></div><label class="field-label" for="font-size" style="margin-top:18px">Reading size <span class="subtle" id="size-value">14 px</span></label><input id="font-size" type="range" min="12" max="20" value="14" style="width:100%;accent-color:var(--accent)"></div>
+          <div class="setting-group"><p class="setting-title">Structure &amp; print</p><label class="switch-row" for="include-toc">Table of contents<input id="include-toc" type="checkbox" checked></label><p class="helper">Generate from headings. Existing contents lists in your Markdown are kept.</p><div class="two-fields" style="margin-top:18px"><div><label class="field-label" for="page-size">Page size</label><select class="field" id="page-size"><option>A4</option><option>Letter</option></select></div><div><label class="field-label" for="margins">Margins</label><select class="field" id="margins"><option value="normal">Normal</option><option value="narrow">Narrow</option><option value="wide">Wide</option></select></div></div></div>
+          <div class="setting-group"><p class="setting-title">Reading layout</p><label class="field-label" for="toc-position">Contents position</label><select class="field" id="toc-position"><option value="top">Inside document</option><option value="left">Left sidebar</option></select><p class="helper">Your contents layout is included in HTML and PDF. On phones, contents appear above the document.</p><label class="field-label" for="pdf-style" style="margin-top:16px">PDF appearance</label><select class="field" id="pdf-style"><option value="standard">White · soft panels</option><option value="minimal">White · minimal ink</option></select><p class="helper">PDF always uses white pages, independent of your document theme.</p></div>
+          <div class="setting-group image-settings"><p class="setting-title">Images</p><button class="quiet" id="add-images">＋ Add local images</button><input type="file" id="image-input" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" multiple hidden><p class="helper">Match filenames used in your notes. Attached images are embedded in exports.</p><ul id="image-list" class="image-list" aria-label="Attached images"></ul><label class="switch-row" for="embed-remote">Embed linked images<input id="embed-remote" type="checkbox" checked></label><p class="helper">External images need internet. Embedding also requires the image host to allow it.</p></div>
+          <div class="export" id="export-panel"><p class="setting-title">Ready to share</p><label class="field-label" for="filename">File name / document title</label><input class="field" id="filename" value="kubernetes-deployment" maxlength="150"><button class="primary" id="export-html">↓ &nbsp; Export HTML</button><button id="export-pdf">↓ &nbsp; Save as PDF</button><p class="helper">HTML uses your selected document theme. PDF always uses white pages.</p></div>
+          <p class="local-note"><span aria-hidden="true">♧</span>Conversion stays on your device. Linked external images contact their image host.</p>
+        </div>
+      </details>
+    </div>
+    <footer class="bottom"><div class="capabilities"><span>Markdown</span><span>Code highlighting</span><span>Diagrams</span><span>Math</span></div><span class="developer-credit">Developed by <a href="https://harshraj.co.in/" target="_blank" rel="noopener noreferrer">Harsh Raj Gupta</a></span></footer>
+  </main>
+  <nav class="mobile-tabs" role="tablist" aria-label="Workspace view">
+    <button id="editor-tab" role="tab" aria-controls="editor-panel" aria-selected="false" data-view="editor"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l4-1L21 6l-3-3L5 16z"/></svg><span>Markdown</span></button>
+    <button id="preview-tab" role="tab" aria-label="Document preview" aria-controls="preview-panel" aria-selected="true" data-view="preview"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM15 3v5h4M8 12h8M8 16h6"/></svg><span>Preview</span></button>
+    <button id="settings-tab" role="tab" aria-controls="settings-panel" aria-selected="false" data-view="settings"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6"/></svg><span>Settings</span></button>
+    <button id="export-tab" role="tab" aria-controls="export-panel" aria-selected="false" data-view="export"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span>Export</span></button>
+  </nav>
+  <dialog id="replace-dialog"><form method="dialog"><h2 id="replace-title">Replace this document?</h2><p>Your current draft will be replaced. Save it as Markdown first if you want to keep it.</p><div class="dialog-actions"><button value="cancel">Keep editing</button><button value="replace" class="primary">Replace document</button></div></form></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <noscript>Markflow needs JavaScript to convert your Markdown. Enable JavaScript and reload.</noscript>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
