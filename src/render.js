@@ -8,8 +8,8 @@ let mermaidModule;
 export function sanitizeHTML(html) {
   return purifier.sanitize(html, {
     USE_PROFILES: { html: true },
-    FORBID_TAGS: ['style', 'form', 'textarea', 'select', 'option', 'iframe', 'object', 'embed', 'video', 'audio', 'source', 'link', 'meta', 'base'],
-    FORBID_ATTR: ['style', 'srcset', 'autofocus', 'contenteditable', 'formaction'],
+    FORBID_TAGS: ['style', 'form', 'dialog', 'textarea', 'select', 'option', 'iframe', 'object', 'embed', 'video', 'audio', 'source', 'link', 'meta', 'base'],
+    FORBID_ATTR: ['style', 'srcset', 'background', 'ping', 'poster', 'autofocus', 'contenteditable', 'formaction', 'popover', 'popovertarget', 'popovertargetaction', 'command', 'commandfor'],
     ADD_TAGS: ['input'], ADD_ATTR: ['type', 'checked', 'disabled'],
     ALLOW_DATA_ATTR: true,
   });
@@ -17,8 +17,21 @@ export function sanitizeHTML(html) {
 
 export function prepareDocument(source, settings) {
   const result = parseMarkdown(source);
-  const root = document.createElement('div');
-  root.innerHTML = sanitizeHTML(result.html);
+  // Parse in an inert template first: even detached images in the live document
+  // can start requests before local filenames have been resolved.
+  const template = document.createElement('template');
+  template.innerHTML = sanitizeHTML(result.html);
+  const root = template.content.ownerDocument.createElement('div');
+  root.append(template.content);
+  for (const image of root.querySelectorAll('img')) {
+    image.dataset.originalSrc = image.getAttribute('src') || '';
+    image.removeAttribute('src');
+  }
+  const documentClasses = new Set(['codeblock', 'code-head', 'copy-code', 'hljs', 'math-slot', 'diagram', 'footnotes', 'footnotes-list', 'footnotes-sep', 'footnote-item', 'footnote-ref', 'footnote-backref', 'contains-task-list', 'task-list-item', 'task-list-item-checkbox']);
+  for (const node of root.querySelectorAll('[class]')) {
+    const classes = [...node.classList].filter(name => documentClasses.has(name) || /^hljs-[a-z0-9_-]+$/i.test(name));
+    if (classes.length) node.className = classes.join(' '); else node.removeAttribute('class');
+  }
   // Prevent imported document identifiers from shadowing app controls.
   const ids = new Map(), used = new Set();
   for (const node of root.querySelectorAll('[id]')) {

@@ -56,12 +56,12 @@ test('file import and images persist, export opens independently offline', async
 
 test('offline reload can render a new diagram engine and new math', async ({ page, context }) => {
   await ready(page);
-  await expect(page.locator('#offline-status')).toHaveText('Offline ready', { timeout: 30000 });
+  await expect(page.locator('#offline-status')).toHaveText('Offline', { timeout: 30000 });
   await expect(page.locator('#offline-status')).toHaveAttribute('data-state', 'ready');
   await expect(page.locator('#offline-status')).toHaveCSS('color', 'rgb(169, 240, 209)');
   await context.setOffline(true);
   await page.reload(); await expect(page.locator('#render-status')).toContainText('Ready');
-  await expect(page.locator('#offline-status')).toHaveText('Working offline');
+  await expect(page.locator('#offline-status')).toHaveText('Offline');
   await expect(page.locator('#offline-status')).toHaveAttribute('data-state', 'active');
   await page.locator('#source').fill('# Offline note\n\n$\\sum_{i=1}^{n} i$\n\n```mermaid\npie title Resources\n "CPU" : 40\n "Memory" : 60\n```');
   await expect(page.locator('#document h1')).toHaveText('Offline note');
@@ -86,6 +86,14 @@ test('drag and drop, unsafe HTML and invalid Mermaid are handled', async ({ page
 });
 
 test('mobile layout and PDF print view include document content', async ({ page }, testInfo) => {
+  // Exercise the deployed HTTP policy too, including frame-ancestors and X-Frame-Options.
+  const hosting = await readFile('netlify.toml', 'utf8');
+  const policy = hosting.match(/Content-Security-Policy = "([^"]+)"/)[1];
+  await page.route('**/*', async route => {
+    if (route.request().resourceType() !== 'document') { await route.continue(); return; }
+    const response = await route.fetch();
+    await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': policy, 'x-frame-options': 'DENY' } });
+  });
   await page.setViewportSize({ width: 390, height: 844 }); await ready(page);
   await expect(page.locator('#editor-panel')).toBeHidden();
   await page.getByRole('tab', { name: 'Markdown', exact: true }).click();

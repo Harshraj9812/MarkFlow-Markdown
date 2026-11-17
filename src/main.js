@@ -334,7 +334,7 @@ function updateOfflineStatus() {
   const active = navigator.serviceWorker?.controller;
   const ready = Boolean(offlineReady && active);
   indicator.dataset.state = ready ? (navigator.onLine ? 'ready' : 'active') : (navigator.onLine ? 'preparing' : 'unavailable');
-  indicator.textContent = ready ? (navigator.onLine ? 'Offline ready' : 'Working offline') : (navigator.onLine ? 'Preparing offline access…' : 'Offline · cache not ready');
+  indicator.textContent = ready ? 'Offline' : (navigator.onLine ? 'Preparing offline access…' : 'Offline · cache not ready');
 }
 window.addEventListener('online', updateOfflineStatus); window.addEventListener('offline', updateOfflineStatus);
 navigator.serviceWorker?.addEventListener('controllerchange', () => { offlineReady = true; updateOfflineStatus(); });

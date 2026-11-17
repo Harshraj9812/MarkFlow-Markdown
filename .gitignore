@@ -5,3 +5,20 @@ test-results/
 .netlify/
 *.local
 review-exports/
+
+# Local credentials, environment overrides and editor/agent state
+.env
+.env.*
+!.env.example
+.aws/
+.codex/
+.agents/
+.cursor/
+.vscode/
+.idea/
+.DS_Store
+*.pem
+*.key
+*.p12
+*.pfx
+gitleaks-report.*

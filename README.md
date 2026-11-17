@@ -4,6 +4,8 @@ A browser-based Markdown workspace for DevOps notes, runbooks and documentation.
 
 The app is static and can be hosted on Netlify. It has no server, login, paid API or document upload service.
 
+See [SECURITY.md](SECURITY.md) for data handling, the security review, dependency remediation and repeatable audit checks.
+
 ## Run locally
 
 Use Node.js 22.22.2 or later (or a current Node.js 24/26 release).
@@ -79,7 +81,7 @@ PDF generation is native browser printing, so text stays selectable. There is no
 
 ## Offline and installation
 
-Open the deployed HTTPS site (or production localhost preview) once and wait for **Offline ready** before disconnecting. The first cache includes all bundled diagram engines and equation fonts, so an unused diagram type can still render offline. External images are not automatically cached.
+Open the deployed HTTPS site (or production localhost preview) once and wait for the green **Offline** badge before disconnecting. It indicates that offline access is ready, including while your device is online. The first cache includes all bundled diagram engines and equation fonts, so an unused diagram type can still render offline. External images are not automatically cached.
 
 The **Install app** button appears when your browser offers installation. Browsers with different installation flows can use their own **Install app** or **Add to Home Screen** menu. Service workers require HTTPS or localhost. Offline mode is not provided by the development server.
 

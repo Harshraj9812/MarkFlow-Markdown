@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 import { groupPrintIntroductions } from '../src/print-layout.js';
+import { resolveImages } from '../src/images.js';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://example.test' });
 globalThis.window = dom.window;
@@ -16,6 +17,18 @@ test('untrusted raw HTML cannot inject scripts, styles, events or app identifier
   assert.equal(root.querySelector('[id="export-html"]'), null);
   assert.equal(root.querySelector('[id="doc-export-html"]').textContent, 'text');
   assert.equal(root.querySelector('a[href^="javascript:"]'), null);
+});
+
+test('local image paths are inert until resolved and app UI classes are removed', () => {
+  const root = prepareDocument('# Privacy\n\n![Private](private/screenshot.png?token=secret)\n\n<div class="toast mobile-tabs">Untrusted UI</div><dialog open>Fake modal</dialog><div popover>Fake popover</div>', { toc: false }).root;
+  assert.equal(root.querySelector('img').getAttribute('src'), null);
+  assert.equal(root.querySelector('img').dataset.originalSrc, 'private/screenshot.png?token=secret');
+  assert.equal(root.querySelector('.toast,.mobile-tabs'), null);
+  assert.equal(root.querySelector('dialog,[popover]'), null);
+  const missing = resolveImages(root, new Map());
+  assert.equal(missing.length, 1);
+  assert.equal(root.querySelector('img'), null);
+  assert.ok(root.querySelector('.missing-image'));
 });
 
 test('TOC can be omitted and heading links preserve valid IDs', () => {

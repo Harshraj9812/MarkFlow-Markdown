@@ -21,11 +21,11 @@ export function blobToDataURL(blob) {
 export function resolveImages(root, assets) {
   const missing = [];
   for (const image of root.querySelectorAll('img')) {
-    const path = image.getAttribute('src') || '';
+    const path = image.dataset.originalSrc ?? image.getAttribute('src') ?? '';
+    delete image.dataset.originalSrc;
     image.referrerPolicy = 'no-referrer';
     image.removeAttribute('srcset');
-    if (/^https?:\/\//i.test(path)) continue;
-    if (/^data:image\/(png|jpeg|webp|gif|avif);base64,/i.test(path)) continue;
+    if (/^https?:\/\//i.test(path) || /^data:image\/(png|jpeg|webp|gif|avif);base64,/i.test(path)) { image.src = path; continue; }
     const asset = findImage(path, assets);
     if (asset) image.src = asset.data;
     else {
