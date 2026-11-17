@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
-import { groupPrintIntroductions } from '../src/print-layout.js';
+import { groupPrintIntroductions, preparePrintContent } from '../src/print-layout.js';
 import { resolveImages } from '../src/images.js';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://example.test' });
@@ -74,4 +74,19 @@ test('print groups keep short heading introductions with code without swallowing
   assert.equal(root.textContent, text);
   groupPrintIntroductions(root);
   assert.equal(root.querySelectorAll('.print-lead').length, 2);
+});
+
+test('print anchors use unique local destinations and preserve external URLs', () => {
+  const html = '<!doctype html><title>Guide</title><style>.document{color:black}</style><main class="document"><a href="#doc-setup">Setup</a><a href="https://example.com/guide?q=1#details" target="_blank">Web guide</a><h2 id="doc-setup">Setup</h2><details><summary>More</summary>Details</details></main>';
+  const first = preparePrintContent(html, document);
+  const second = preparePrintContent(html, document);
+  const target = first.container.querySelector('h2').id;
+  assert.match(target, /^markflow-print-\d+-doc-setup$/);
+  assert.notEqual(target, second.container.querySelector('h2').id);
+  assert.equal(first.container.querySelector('a').getAttribute('href'), '#' + target);
+  assert.equal(first.container.querySelectorAll('a')[1].getAttribute('href'), 'https://example.com/guide?q=1#details');
+  assert.equal(first.container.querySelector('[target]'), null);
+  assert.ok(first.container.querySelector('details').open);
+  assert.equal(first.style.media, 'print');
+  assert.equal(first.title, 'Guide');
 });

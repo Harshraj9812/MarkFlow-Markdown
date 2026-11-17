@@ -85,8 +85,8 @@ test('drag and drop, unsafe HTML and invalid Mermaid are handled', async ({ page
   await expect(page.locator('#document .diagram svg')).toHaveCount(1);
 });
 
-test('mobile layout and PDF print view include document content', async ({ page }, testInfo) => {
-  // Exercise the deployed HTTP policy too, including frame-ancestors and X-Frame-Options.
+test('mobile PDF preserves web links, contents destinations and document content', async ({ page }, testInfo) => {
+  // Exercise the deployed HTTP policy as well as the app's meta policy.
   const hosting = await readFile('netlify.toml', 'utf8');
   const policy = hosting.match(/Content-Security-Policy = "([^"]+)"/)[1];
   await page.route('**/*', async route => {
@@ -98,7 +98,8 @@ test('mobile layout and PDF print view include document content', async ({ page 
   await expect(page.locator('#editor-panel')).toBeHidden();
   await page.getByRole('tab', { name: 'Markdown', exact: true }).click();
   await expect(page.locator('#source')).toBeVisible();
-  await page.locator('#source').fill('# Mobile guide\n\n$$\n\\frac{a}{b}\n$$\n\n```bash\necho hello\n```\n\n```mermaid\nflowchart LR\n A[Build] --> B[Deploy]\n```\n\n<details><summary>More</summary>Printable detail</details>');
+  const longSection = Array.from({ length: 18 }, () => 'Review the service configuration and confirm that the deployment remains healthy. '.repeat(3)).join('\n\n');
+  await page.locator('#source').fill('# Mobile guide\n\n[Web guide](https://example.com/guide?from=markflow#intro)\n\n[Jump to checks](#checks)\n\n$$\n\\frac{a}{b}\n$$\n\n```bash\necho hello\n```\n\n```mermaid\nflowchart LR\n A[Build] --> B[Deploy]\n```\n\n<details><summary>More</summary>Printable detail</details>\n\n' + longSection + '\n\n## Checks\n\nVerify the release.[^source]\n\n[^source]: Keep a record of the outcome.');
   await page.getByRole('tab', { name: 'Document preview' }).click();
   await expect(page.locator('#document h1')).toHaveText('Mobile guide');
   await expect(page.locator('#document')).toHaveAttribute('data-theme', 'dark');
@@ -106,29 +107,40 @@ test('mobile layout and PDF print view include document content', async ({ page 
   await page.getByRole('combobox', { name: 'PDF appearance' }).selectOption('minimal');
   await page.getByRole('tab', { name: 'Export', exact: true }).click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.evaluate(() => { window.__printed = 0; });
-  // Stub only the native dialog; keep document generation, fonts and layout real.
-  await page.evaluate(() => {
-    const append = document.body.append.bind(document.body);
-    document.body.append = (...nodes) => {
-      for (const node of nodes) if (node.tagName === 'IFRAME') node.addEventListener('load', () => { node.contentWindow.print = () => { window.__printed++; }; });
-      return append(...nodes);
-    };
-  });
+  // Stub only the native dialog; print this actual page-level document below.
+  await page.evaluate(() => { window.__printed = 0; window.print = () => { window.__printed++; }; });
   await page.getByRole('button', { name: /Save as PDF/ }).click();
   await expect.poll(() => page.evaluate(() => window.__printed)).toBe(1);
-  const frame = page.frameLocator('.print-frame');
-  await expect(frame.locator('h1')).toHaveText('Mobile guide');
-  await expect(frame.locator('details')).toHaveAttribute('open', '');
-  await expect(frame.locator('.katex')).toHaveCount(1);
-  await expect(frame.locator('.document')).toHaveAttribute('data-theme', 'light');
-  await expect(frame.locator('.document')).toHaveAttribute('data-pdf-style', 'minimal');
-  await expect(frame.locator('.codeblock')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
-  await expect(frame.locator('.diagram')).toContainText('Deploy');
-  const printHTML = await page.locator('.print-frame').getAttribute('srcdoc');
-  const printPage = await page.context().newPage(); await printPage.setContent(printHTML);
-  const pdf = await printPage.pdf({ path: testInfo.outputPath('mobile-guide.pdf'), printBackground: true, preferCSSPageSize: true });
+  const printed = page.locator('.print-document');
+  await expect(printed.locator('h1')).toHaveText('Mobile guide');
+  await expect(printed.locator('details')).toHaveAttribute('open', '');
+  await expect(printed.locator('.katex')).toHaveCount(1);
+  await expect(printed.locator('.document')).toHaveAttribute('data-theme', 'light');
+  await expect(printed.locator('.document')).toHaveAttribute('data-pdf-style', 'minimal');
+  await expect(printed.locator('.codeblock')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(printed.locator('.diagram')).toContainText('Deploy');
+  const checksId = await printed.locator('h2').getAttribute('id');
+  const footnoteId = await printed.locator('.footnote-item').getAttribute('id');
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  const pdfPath = testInfo.outputPath('mobile-guide.pdf');
+  const pdf = await page.pdf({ path: pdfPath, printBackground: true, preferCSSPageSize: true });
   expect(pdf.subarray(0, 4).toString()).toBe('%PDF'); expect(pdf.length).toBeGreaterThan(10000);
+  const objects = pdf.toString('latin1');
+  expect(objects).toContain('/Subtype /Link');
+  expect(objects).toContain('/URI (https://example.com/guide?from=markflow#intro)');
+  expect(objects).toContain('/Dest /' + checksId);
+  expect(objects).toContain('/Dest /' + footnoteId);
+  const destinations = spawnSync('pdfinfo', ['-dests', pdfPath], { encoding: 'utf8' });
+  if (!destinations.error) {
+    expect(destinations.status).toBe(0);
+    const checks = destinations.stdout.split('\n').find(line => line.includes('"' + checksId + '"'));
+    expect(parseInt(checks.trim().split(/\s+/)[0], 10)).toBeGreaterThan(1);
+  }
+  await page.emulateMedia({ media: 'screen' });
+  await expect(printed).toHaveCount(0);
+  await expect(page).toHaveTitle('Markflow · Markdown workspace');
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
 });
 

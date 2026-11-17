@@ -70,10 +70,11 @@ External HTTP(S) images load from their original host. **Embed linked images** a
 
 ### PDF export
 
-**Save as PDF** prepares a document-only print frame, waits for fonts and images, expands collapsible sections, then opens the browser print dialog. Select your browser's PDF destination.
+**Save as PDF** prepares a document-only print layout in the page, waits for fonts and images, expands collapsible sections, then opens the browser print dialog. Select the browser's built-in **Save as PDF** destination to retain clickable links. The editor is restored after printing or cancellation.
 
 - PDF pages and diagrams always use a light theme, independently of the preview/HTML theme. **PDF appearance** offers soft gray panels or a white minimal-ink style.
 - Disable browser headers/footers if you do not want the date and URL.
+- Web URLs and in-document contents/footnote links are preserved as PDF links. Links to other Markdown files need full web URLs for a portable destination; the converter does not know where those files will be hosted.
 - Page size and margin controls provide CSS print defaults. Browser settings can override them, and pagination varies between browsers.
 - Short heading introductions stay with their following code block when the group fits on one page. Code blocks that fit on a page stay together. Oversized groups may break between their introduction and code; blocks taller than a full page can split. Print code uses tighter line spacing, and long lines wrap. Wide tables are constrained to the page. Very large diagrams may need a smaller reading size or separate export.
 

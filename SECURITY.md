@@ -38,9 +38,9 @@ Sanitized raw HTML could retain app class names such as `toast`, enabling import
 ### Additional enforcement
 
 - Imported scripts, frames, forms, event attributes and document-supplied styles are removed. Background-image and link-ping attributes are also blocked.
-- Content Security Policy is declared in the app and Netlify headers. It restricts scripts to the same origin, blocks inline script execution, objects and base-URL changes, and permits the internal PDF print frame. Localhost WebSocket exceptions appear only in the app's meta policy for Vite development; deployed headers are stricter.
+- Content Security Policy is declared in the app and Netlify headers. It restricts scripts to the same origin and blocks inline script execution, objects and base-URL changes. Localhost WebSocket exceptions appear only in the app's meta policy for Vite development; deployed headers are stricter.
 - Inline **styles** remain allowed because equation and diagram rendering needs them. This is separate from inline scripts, which are blocked.
-- Mermaid remains in strict mode, and generated SVG is sanitized. KaTeX trusted HTML commands are disabled. Exported HTML has its own restrictive policy, and the print iframe runs without script permission.
+- Mermaid remains in strict mode, and generated SVG is sanitized. KaTeX trusted HTML commands are disabled. Exported HTML has its own restrictive policy. The PDF print layout reuses sanitized content without executing document scripts and is removed after printing.
 
 ## Repeatable checks
 

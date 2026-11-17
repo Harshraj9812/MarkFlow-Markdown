@@ -2,7 +2,7 @@ import documentCSS from './document.css?inline';
 import layoutCSS from './layouts.css?inline';
 import mathCSS from 'virtual:math-css';
 import { embedRemoteImages } from './images.js';
-import { groupPrintIntroductions } from './print-layout.js';
+import { groupPrintIntroductions, preparePrintContent } from './print-layout.js';
 
 export { documentCSS, mathCSS };
 export function escapeHTML(value) {
@@ -46,28 +46,28 @@ export function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
+let activePrintCleanup;
 export async function printDocument(html) {
-  const frame = document.createElement('iframe');
-  frame.title = 'Print document'; frame.className = 'print-frame';
-  // Scripts are unnecessary; same-origin access lets us await fonts and images.
-  frame.setAttribute('sandbox', 'allow-same-origin allow-modals');
-  const loaded = new Promise((resolve, reject) => {
-    frame.onload = resolve;
-    frame.onerror = () => reject(new Error('Could not prepare the print view'));
-  });
-  frame.srcdoc = html; document.body.append(frame);
+  activePrintCleanup?.();
+  const { container, style, title } = preparePrintContent(html, document);
+  const previousTitle = document.title;
+  let cleanupTimer;
+  const cleanup = () => {
+    clearTimeout(cleanupTimer); window.removeEventListener('afterprint', cleanup);
+    container.remove(); style.remove(); document.title = previousTitle;
+    if (activePrintCleanup === cleanup) activePrintCleanup = undefined;
+  };
+  activePrintCleanup = cleanup;
+  document.head.append(style); document.body.append(container);
   try {
-    await loaded;
-    const doc = frame.contentDocument;
-    // Print disclosures expanded so their content is included in the PDF.
-    doc.querySelectorAll('details').forEach(details => { details.open = true; });
-    await doc.fonts.ready;
-    await Promise.all([...doc.images].map(image => image.complete ? Promise.resolve() : new Promise(resolve => {
+    await document.fonts.ready;
+    await Promise.all([...container.querySelectorAll('img')].map(image => image.complete ? Promise.resolve() : new Promise(resolve => {
       image.addEventListener('load', resolve, { once: true }); image.addEventListener('error', resolve, { once: true }); setTimeout(resolve, 10000);
     })));
-    frame.contentWindow.addEventListener('afterprint', () => frame.remove(), { once: true });
-    frame.contentWindow.focus(); frame.contentWindow.print();
-    // Retain the frame while browsers display a nonblocking print dialog.
-    setTimeout(() => frame.remove(), 300000);
-  } catch (error) { frame.remove(); throw error; }
+    container.removeAttribute('aria-hidden'); document.title = title || previousTitle;
+    window.addEventListener('afterprint', cleanup, { once: true });
+    // Retain the print layout for browsers with a nonblocking dialog.
+    cleanupTimer = setTimeout(cleanup, 300000);
+    window.print();
+  } catch (error) { cleanup(); throw error; }
 }

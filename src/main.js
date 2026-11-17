@@ -318,6 +318,10 @@ async function exportDocument(format) {
     if (format === 'html') download(html, `${safeFilename(options.filename)}.html`, 'text/html;charset=utf-8');
     else await printDocument(html);
     const notices = [];
+    if (format === 'pdf' && [...exportRoot.querySelectorAll('a[href]')].some(link => {
+      const href = link.getAttribute('href');
+      return href && !/^(#|\/\/|[a-z][a-z0-9+.-]*:)/i.test(href);
+    })) notices.push('Some links point to relative files. Use full web URLs for portable PDF links.');
     if (failed.length) notices.push(`${failed.length} linked image(s) could not be embedded and still need internet.`);
     if (missingImages.length) notices.push('Some local images are missing; attach them and export again to include them.');
     if (renderWarnings.length) notices.push('A diagram could not be rendered; its source is included.');
